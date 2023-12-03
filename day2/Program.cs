@@ -45,7 +45,26 @@
 
     private static int Part2(string pathToInput)
     {
-        return 0;
+        int totalSum = 0;
+        foreach (string line in File.ReadLines(pathToInput))
+        {
+            string spart = line.Split(": ")[1];
+            string[] sets = spart.Split("; ");
+            int max_red = 0, max_green = 0, max_blue = 0;
+            foreach (var set in sets)
+            {
+                var (red_cnt, green_cnt, blue_cnt) = ColorsFromSet(set);
+                if (red_cnt > max_red)
+                    max_red = red_cnt;
+                if (green_cnt > max_green)
+                    max_green = green_cnt;
+                if (blue_cnt > max_blue)
+                    max_blue = blue_cnt;
+            }
+            int power = max_red * max_green * max_blue;
+            totalSum += power;
+        }
+        return totalSum;
     }
 
     public static int Main(string[] args)
