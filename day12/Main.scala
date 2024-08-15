@@ -37,8 +37,45 @@ object Main {
       .map(procParsedLine).sum
   }
 
+  private def isMatch(springs: String)(spring: Char)(index: Int) = {
+    springs
+      .take(index)
+      .forall(List(spring, '?').contains(_))
+  }
+
+  private val memo = collection.mutable.Map[(String, List[Int]), Long]()
+
+  private def memoize(springs: String)(counts: List[Int]): Long = {
+    val key = (springs, counts)
+    (memo.get(key), counts) match
+      case (Some(value), _) => value
+      case (_, Nil) =>
+        val result = if isMatch(springs)('.')(springs.size) then 1L else 0L
+        memo.addOne(key -> result)
+        result
+      case (_, head :: next) =>
+        val searchRange = springs.size - counts.sum - counts.size + 1
+        val result = (1 to searchRange)
+          .filter(index =>
+            isMatch(springs)('.')(index) &&
+              isMatch(springs.drop(index))('#')(head)
+          )
+          .map(index => memoize(springs.drop(index + head))(next))
+          .sum
+        memo.addOne(key -> result)
+        result
+  }
+
+  private def procParsedLine2(line: String): Long = {
+    val cpyCount = 5;
+    val (springs, counts) = parseLine(line)
+    val unfoldedSprings = List.fill(cpyCount)(springs).mkString("?")
+    val unfoldedCounts = List.fill(cpyCount)(counts).flatten
+    memoize("." + unfoldedSprings)(unfoldedCounts)
+  }
+
   private def part2(lines: List[String]): Long = {
-    0
+    lines.map(procParsedLine2).sum
   }
 
   def main(args: Array[String]): Unit = {

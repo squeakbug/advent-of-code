@@ -79,7 +79,10 @@ function part1(data) {
 }
 
 function part2(data) {
-    return 0;
+    let result = data.split("\n\n").map((pattern) => {
+        return procPattern(pattern)
+    }).reduce((acc, item) => acc + item)
+    return result
 }
 
 function main() {

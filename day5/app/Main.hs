@@ -47,6 +47,31 @@ part1 content = minimum locs
         tables = parseTables $ drop 1 chunks
         locs = locations tables seeds
 
+transform :: Table -> ClosedInterval -> [ClosedInterval]
+transform t (a,b)
+    |rulesContain /= [] = [apply (head rulesContain) (a,b)]
+    |rulesLeft    /= [] = transform t left1 ++ transform t right1
+    |rulesRight   /= [] = transform t left2 ++ transform t right2
+    |otherwise          = [(a,b)] 
+  where
+    -- Three possible cases:
+    rulesContain = filter (((a,b) `isin`) . fst) $ t
+    rulesLeft    = filter ((`cuts` (a,b)) . fst) $ t
+    rulesRight   = filter (((a,b) `cuts`) . fst) $ t
+
+    -- Case 0: Interval falls entirely into the domain of a rule.
+    -- Nothing more to do.
+
+    -- Case 1: A rule cuts the interval from the left
+    left1        = (a, cut1)
+    right1       = (cut1+1, b)
+    cut1         = snd . fst . head $ rulesLeft
+
+    -- Case 2: A rule cuts the interval from the right
+    left2        = (a, cut2-1)
+    right2       = (cut2, b)
+    cut2         = fst . fst . head $ rulesRight
+
 part2 :: String -> Int
 part2 content = 0
 
