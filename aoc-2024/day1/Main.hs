@@ -39,12 +39,12 @@ part1 = sum
       . map (abs . uncurry (-)) 
       . sortAndZip
 
-type MemoState k v = State (Map.Map k v)
+type MemoState k v a = State (Map.Map k v) a
 
 -- | Memoize function
 --   @input key - cache
 --   @f - partially applied function, that gets cache and return result of computation
-memoize :: (Ord k) => k -> (k -> v) -> MemoState k v
+memoize :: (Ord k) => k -> (k -> v) -> MemoState k v v
 memoize key f = do
     cache <- get
     case Map.lookup key cache of
@@ -54,16 +54,19 @@ memoize key f = do
             put (Map.insert key newValue cache)
             return newValue
 
-similarity :: (Eq a, Num a) => [a] -> a -> Int
-similarity (x:xs) s | x == s    = s + similarity xs s
+similarity :: [Int] -> Int -> Int
+similarity [] s = 0
+similarity (x:xs) s | x == s    = 1 + similarity xs s
                     | otherwise = similarity xs s
 
-memoizedSimilarity :: Int -> MemoState Int Int
-memoizedSimilarity xs = memoize xs similarity
+memoizedSimilarity :: Int -> MemoState Int Int Int
+memoizedSimilarity xs = memoize xs similarity xs
 
 -- Run sequence searches with the same cache
 part2 :: [(Int, Int)] -> Int
-part2 _ = 0
+part2 xs = sum $ map (\x -> x * similarity first x) second
+    where
+        (first, second) = unzip xs
 
 main :: IO ()
 main = do
