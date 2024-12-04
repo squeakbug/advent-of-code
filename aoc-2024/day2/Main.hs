@@ -18,18 +18,35 @@ parseFile :: String -> [Report]
 parseFile = map parseReport
           . lines
 
-isReportValid :: Report -> Bool
-isReportValid xs = isInRange folded && monotonic folded
+isReportStrictlyValid :: Report -> Bool
+isReportStrictlyValid xs = isInRange folded && monotonic folded
     where
-        monotonic xs = all (>0) xs || all (<0) xs
-        isInRange xs = not $ any ((\x -> x == 0 || x > 3) . abs) xs
+        monotonic xs = all (<0) xs || all (>0) xs
+        isInRange = not . any ((\x -> x == 0 || x > 3) . abs)
+        -- Как это выразить через стрелки или комбинаторы?
         folded = zipWith (-) xs (tail xs)
 
 part1 :: [Report] -> Int
-part1 = length . filter id . map isReportValid
+part1 = length 
+      . filter id 
+      . map isReportStrictlyValid
+
+-- Как выразить мат. свойство таких последовательностей, 
+-- которые имеют не более одного "выброса"? => меньше вычислений
+--
+-- Проход через foldr не потребовал бы столько операций конкатенации списка
+isReportValidHelper :: Report -> Report -> Bool
+isReportValidHelper _ [] = False
+isReportValidHelper oth (x:xs) = isReportStrictlyValid (oth ++ xs)
+                              || isReportValidHelper (oth ++ [x]) xs
+
+isReportValid :: Report -> Bool
+isReportValid  = isReportValidHelper []
 
 part2 :: [Report] -> Int
-part2 _ = 0
+part2 = length 
+      . filter id 
+      . map isReportValid
 
 main :: IO ()
 main = do
