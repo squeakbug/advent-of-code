@@ -7,6 +7,35 @@ sealed class Program
         public List<long> operands;
     };
 
+    private static long Sum(long a, long b) => a + b;
+    private static long Multiply(long a, long b) => a * b;
+    private static long Concat(long b, long a) {
+        long trailing_zeros = 0;
+        long reversed_a = 0;
+        while (a % 10 == 0 && a > 0) { 
+            trailing_zeros += 1;
+            a /= 10;
+        }
+        while (a > 0) {
+            reversed_a = reversed_a * 10 + a % 10;
+            a /= 10;
+        }
+
+        long result = b;
+        while (reversed_a > 0) {
+            result = result * 10 + reversed_a % 10;
+            reversed_a /= 10;
+        }
+        for (long i = 0; i < trailing_zeros; ++i) {
+            result *= 10;
+        }
+        return result;
+    }
+
+    public delegate long Op(long left, long right);
+    private static readonly List<Op> _part1Ops = [ Sum, Multiply ];
+    private static readonly List<Op> _part2Ops = [ Sum, Multiply, Concat ];
+
     private static Statement ParseStatement(string content) {
         var parts = content
             .Split(':').Select(p => p.Trim()).ToArray();
@@ -20,24 +49,32 @@ sealed class Program
         };
     }
 
-    private static long PermutateOps(long acc, long req, List<long> ops) {
+    private static long PermutateOps(
+        List<Op> opers,
+        long acc, 
+        long req, 
+        List<long> ops
+    ) {
         if (ops.Count == 0) {
             if (acc == req) return acc; else return 0;
         } else {
-            long resAdd = PermutateOps(acc + ops[0], req, [.. ops.Skip(1)]);
-            long resMul = PermutateOps(acc * ops[0], req, [.. ops.Skip(1)]);
-            return Math.Max(resAdd, resMul);
+            return opers.Max(op =>
+            {
+                return PermutateOps(opers, op(acc, ops[0]), req, [.. ops.Skip(1)]);
+            });
         }
     }
 
     private static long Part1(List<Statement> statements) {
         return statements
-            .Select(s => PermutateOps(0, s.result, s.operands))
+            .Select(s => PermutateOps(_part1Ops, 0, s.result, s.operands))
             .Sum();
     }
 
-    private static int Part2(List<Statement> statements) {
-        return 0;
+    private static long Part2(List<Statement> statements) {
+        return statements
+            .Select(s => PermutateOps(_part2Ops, 0, s.result, s.operands))
+            .Sum();
     }
 
     public static int Main(string[] args)
